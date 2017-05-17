@@ -1,0 +1,23 @@
+metadata:
+  annotations:
+    configmap.fabric8.io/update-on-change: ${project.artifactId}
+spec:
+  replicas: 1
+  template:
+    spec:
+      metadata:
+        labels:
+          application:  "person"
+          tier:         "data"
+          component:    "person-app"
+      volumes:
+        - name: config
+          configMap:
+            name: ${project.artifactId}
+            items:
+            - key: hibernate.properties
+              path: hibernate.properties
+      containers:
+        - volumeMounts:
+            - name: config
+              mountPath: /deployments/config
