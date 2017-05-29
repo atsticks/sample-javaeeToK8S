@@ -24,22 +24,8 @@
             <plugin>
                 <groupId>io.fabric8</groupId>
                 <artifactId>fabric8-maven-plugin</artifactId>
-                <version>${fabric8.maven.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>fmp</id>
-                        <goals>
-                            <goal>resource</goal>
-                            <!--<goal>helm</goal>-->
-                            <goal>build</goal>
-                        </goals>
-                    </execution>
-                </executions>
                 <configuration>
                     <buildStrategy>s2i</buildStrategy>
-                    <mode>auto</mode>
-                    <recreate>true</recreate>
-                    <verbose>true</verbose>
                     <generator>
                         <config>
                             <java-exec>
@@ -79,46 +65,55 @@
                                 </labels>
                             </build>
                         </image>
-                        <image>
-                            <name>%g/%a-db</name>
-                            <alias>person-db</alias>
-                            <build>
-                                <dockerFileDir>person-db</dockerFileDir>
-                            </build>
-                        </image>
-                        <!--<image>-->
-                        <!--<name>%g/%a-db:latest</name>-->
-                        <!--<alias>person-db</alias>-->
-                        <!--<build>-->
-                        <!--<from>centos/mariadb-101-centos7:latest</from>-->
-                        <!--<maintainer>atsticks@gmail.com</maintainer>-->
-                        <!--<tags>-->
-                        <!--<tag>latest</tag>-->
-                        <!--<tag>${project.version}</tag>-->
-                        <!--</tags>-->
-                        <!--<ports>-->
-                        <!--<port>3306</port>-->
-                        <!--</ports>-->
-                        <!--<labels>-->
-                        <!--<version>latest</version>-->
-                        <!--<artifactId>%g/%a-db:latest</artifactId>-->
-                        <!--</labels>-->
-                        <!--<env>-->
-                        <!--<MYSQL_ROOT_PASSWORD>secret01</MYSQL_ROOT_PASSWORD>-->
-                        <!--<MYSQL_USER>personapp</MYSQL_USER>-->
-                        <!--<MYSQL_PASSWORD>pwd334</MYSQL_PASSWORD>-->
-                        <!--<MYSQL_DATABASE>person</MYSQL_DATABASE>-->
-                        <!--</env>-->
-                        <!--</build>-->
-                        <!--</image>-->
                     </images>
-                    <resources>
-                        <labels>
-                            <service>
-                                <expose>true</expose>
-                            </service>
-                        </labels>
-                    </resources>
+
+                    <deployment>
+                        <name>${project.artifactId}</name>
+                        <replicas>1</replicas>
+                        <containers>
+                            <container>
+                                <alias>person-app</alias>
+                                <ports>
+                                    <port>8080</port>
+                                </ports>
+                                <volumes>
+                                    <volume>
+                                        <name>config</name>
+                                        <type>configMap</type>
+                                        <configMap>
+                                            <name>${project.artifactId}</name>
+                                            <items>
+                                                <item>
+                                                    <key>hibernate.properties</key>
+                                                    <path>hibernate.properties</path>
+                                                </item>
+                                            </items>
+                                        </configMap>
+                                    </volume>
+                                    <mounts>
+                                        <config>/deployments/config</config>
+                                    </mounts>
+                                </volumes>
+                            </container>
+                            <container>
+                                <alias>person-db</alias>
+                                <ports>
+                                    <port>3306</port>
+                                </ports>
+                            </container>
+                        </containers>
+                    </deployment>
+
+                    <services>
+                        <service>
+                            <name>person-app-service</name>
+                            <headless>true</headless>
+                        </service>
+                        <service>
+                            <name>person-db-service</name>
+                            <headless>true</headless>
+                        </service>
+                    </services>
                 </configuration>
             </plugin>
             <!-- vert.x maven plugin to generate the fat-jar -->
@@ -201,4 +196,5 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
 </project>
